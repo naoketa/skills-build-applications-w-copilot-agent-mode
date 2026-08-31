@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { fetchFromApi, extractDataArray } from '../api';
 
 export function Teams() {
   const [teams, setTeams] = useState([]);
@@ -10,9 +9,22 @@ export function Teams() {
     const loadTeams = async () => {
       try {
         setLoading(true);
-        const response = await fetchFromApi('/api/teams');
-        const data = extractDataArray(response);
-        setTeams(data);
+        
+        // Build API URL with Codespaces support
+        let apiUrl;
+        if (import.meta.env.VITE_CODESPACE_NAME && import.meta.env.VITE_CODESPACE_NAME !== 'undefined') {
+          apiUrl = `https://${import.meta.env.VITE_CODESPACE_NAME}-8000.app.github.dev/api/teams/`;
+        } else {
+          apiUrl = 'http://localhost:8000/api/teams/';
+        }
+        
+        const response = await fetch(apiUrl);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        
+        // Handle both paginated and array response formats
+        const teamsList = Array.isArray(data) ? data : (data.data || []);
+        setTeams(teamsList);
         setError(null);
       } catch (err) {
         setError(err.message);

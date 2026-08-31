@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { fetchFromApi, extractDataArray } from '../api';
 
 export function Activities() {
   const [activities, setActivities] = useState([]);
@@ -10,9 +9,22 @@ export function Activities() {
     const loadActivities = async () => {
       try {
         setLoading(true);
-        const response = await fetchFromApi('/api/activities');
-        const data = extractDataArray(response);
-        setActivities(data);
+        
+        // Build API URL with Codespaces support
+        let apiUrl;
+        if (import.meta.env.VITE_CODESPACE_NAME && import.meta.env.VITE_CODESPACE_NAME !== 'undefined') {
+          apiUrl = `https://${import.meta.env.VITE_CODESPACE_NAME}-8000.app.github.dev/api/activities/`;
+        } else {
+          apiUrl = 'http://localhost:8000/api/activities/';
+        }
+        
+        const response = await fetch(apiUrl);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        
+        // Handle both paginated and array response formats
+        const activitiesList = Array.isArray(data) ? data : (data.data || []);
+        setActivities(activitiesList);
         setError(null);
       } catch (err) {
         setError(err.message);

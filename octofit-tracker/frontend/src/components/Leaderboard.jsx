@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { fetchFromApi, extractDataArray } from '../api';
 
 export function Leaderboard() {
   const [entries, setEntries] = useState([]);
@@ -10,9 +9,22 @@ export function Leaderboard() {
     const loadLeaderboard = async () => {
       try {
         setLoading(true);
-        const response = await fetchFromApi('/api/leaderboard');
-        const data = extractDataArray(response);
-        setEntries(data);
+        
+        // Build API URL with Codespaces support
+        let apiUrl;
+        if (import.meta.env.VITE_CODESPACE_NAME && import.meta.env.VITE_CODESPACE_NAME !== 'undefined') {
+          apiUrl = `https://${import.meta.env.VITE_CODESPACE_NAME}-8000.app.github.dev/api/leaderboard/`;
+        } else {
+          apiUrl = 'http://localhost:8000/api/leaderboard/';
+        }
+        
+        const response = await fetch(apiUrl);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        
+        // Handle both paginated and array response formats
+        const entriesList = Array.isArray(data) ? data : (data.data || []);
+        setEntries(entriesList);
         setError(null);
       } catch (err) {
         setError(err.message);

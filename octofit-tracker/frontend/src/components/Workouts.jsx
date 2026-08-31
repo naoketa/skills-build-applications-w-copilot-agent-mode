@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { fetchFromApi, extractDataArray } from '../api';
 
 export function Workouts() {
   const [workouts, setWorkouts] = useState([]);
@@ -10,9 +9,22 @@ export function Workouts() {
     const loadWorkouts = async () => {
       try {
         setLoading(true);
-        const response = await fetchFromApi('/api/workouts');
-        const data = extractDataArray(response);
-        setWorkouts(data);
+        
+        // Build API URL with Codespaces support
+        let apiUrl;
+        if (import.meta.env.VITE_CODESPACE_NAME && import.meta.env.VITE_CODESPACE_NAME !== 'undefined') {
+          apiUrl = `https://${import.meta.env.VITE_CODESPACE_NAME}-8000.app.github.dev/api/workouts/`;
+        } else {
+          apiUrl = 'http://localhost:8000/api/workouts/';
+        }
+        
+        const response = await fetch(apiUrl);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        
+        // Handle both paginated and array response formats
+        const workoutsList = Array.isArray(data) ? data : (data.data || []);
+        setWorkouts(workoutsList);
         setError(null);
       } catch (err) {
         setError(err.message);
