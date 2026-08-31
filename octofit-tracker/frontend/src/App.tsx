@@ -1,11 +1,53 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import heroImg from './assets/hero.png'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
 import './App.css'
+import { API_BASE_URL, API_ENDPOINTS, fetchFromApi } from './services/apiClient'
+
+interface ApiStatus {
+  status: string;
+  message: string;
+  apiUrl: string;
+  environment: string;
+}
+
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+  activityPoints: number;
+}
 
 function App() {
   const [count, setCount] = useState(0)
+  const [apiStatus, setApiStatus] = useState<ApiStatus | null>(null)
+  const [users, setUsers] = useState<User[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const checkApi = async () => {
+      try {
+        // Check API health
+        const healthData = await fetchFromApi(API_ENDPOINTS.health)
+        setApiStatus(healthData)
+
+        // Fetch users
+        const usersData = await fetchFromApi(API_ENDPOINTS.users)
+        setUsers(usersData.data || [])
+        
+        setError(null)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to connect to API')
+        console.error('API Error:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    checkApi()
+  }, [])
 
   return (
     <>
@@ -31,6 +73,37 @@ function App() {
       </section>
 
       <div className="ticks"></div>
+
+      {/* API Status Section */}
+      <section id="api-status">
+        <h2>🔗 API Status</h2>
+        {loading && <p>Loading API data...</p>}
+        {error && <p style={{ color: 'red' }}>⚠️ Error: {error}</p>}
+        {apiStatus && (
+          <div>
+            <p><strong>Status:</strong> {apiStatus.status}</p>
+            <p><strong>API URL:</strong> {apiStatus.apiUrl}</p>
+            <p><strong>Environment:</strong> {apiStatus.environment}</p>
+            <p><strong>Configured Base URL:</strong> {API_BASE_URL}</p>
+          </div>
+        )}
+      </section>
+
+      {/* Users Section */}
+      <section id="users">
+        <h2>👥 Users ({users.length})</h2>
+        {users.length > 0 ? (
+          <ul>
+            {users.map((user) => (
+              <li key={user._id}>
+                <strong>{user.name}</strong> - {user.email} ({user.activityPoints} points)
+              </li>
+            ))}
+          </ul>
+        ) : (
+          !loading && <p>No users found</p>
+        )}
+      </section>
 
       <section id="next-steps">
         <div id="docs">

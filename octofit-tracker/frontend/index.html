@@ -5,6 +5,24 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>frontend</title>
+    <script>
+      // Detect Codespaces environment
+      // In Codespaces, the CODESPACE_NAME is available via the hostname or can be passed during build
+      window.__CODESPACE_NAME__ = (() => {
+        const hostname = window.location.hostname;
+        // Codespaces URLs look like: https://{CODESPACE_NAME}-8000.app.github.dev
+        const match = hostname.match(/^(.+)-\d+\.app\.github\.dev$/);
+        return match ? match[1] : null;
+      })();
+      
+      window.__API_DEBUG__ = {
+        hostname: window.location.hostname,
+        protocol: window.location.protocol,
+        codespaceName: window.__CODESPACE_NAME__,
+      };
+      
+      console.log('🌐 Frontend Environment:', window.__API_DEBUG__);
+    </script>
   </head>
   <body>
     <div id="root"></div>
